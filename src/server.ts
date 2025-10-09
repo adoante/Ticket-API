@@ -17,6 +17,8 @@ const app: Express = express();
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
+const port = process.env.PORT || 3000
+
 const allowedOrigins = [
 	"https://adolfogante.com",
 	"https://www.adolfogante.com"
@@ -31,10 +33,23 @@ app.use(cors({
 		}
 	},
 	methods: ["GET", "POST", "PUT", "DELETE"],
-	credentials: true, // if you use cookies or auth headers
+	credentials: true,
 }))
 
-const port = process.env.PORT || 3000
+app.use("/tickets", (req, res, next) => {
+	const authHeader = req.headers.authorization;
+
+	if (!authHeader || !authHeader.startsWith("Bearer ")) {
+		return res.status(401).json({ error: "Unauthorized" })
+	}
+
+	const token = authHeader.split(" ")[1];
+	if (token !== process.env.API_TOKEN) {
+		return res.status(403).json({ error: "Forbidden" })
+	}
+
+	next()
+})
 
 app.get("/", (req: Request, res: Response) => {
 	res.send("Ticket API.")
