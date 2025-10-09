@@ -1,18 +1,74 @@
 import express from "express"
 import type { Express, Request, Response } from "express"
-import "dotenv/config"
-//import cors from "cors"
 
+import dotenv from "dotenv"
+import cors from "cors"
+
+import { PrismaClient, Prisma } from "@prisma/client"
+import type { Ticket } from "@prisma/client"
+
+import type { TicketQueryParams, TicketCreateDTO, TicketResponseDTO } from "./types/ticket.ts"
+
+dotenv.config()
+
+const prisma = new PrismaClient()
 const app: Express = express();
 
-// app.use(cors( origin: "" ))
+app.use(cors())
+app.use(express.json())
+app.use(express.urlencoded({ extended: true }))
 
-const port = process.env.PORT
+const port = process.env.PORT || 3000
 
 app.get("/", (req: Request, res: Response) => {
-	res.send("Express with TypeScript!")
-});
+	res.send("Ticket API.")
+})
 
+app.post("/submit", async (req: Request, res: Response) => {
+	const ticketDTO: TicketCreateDTO = req.body
+
+	const ticket: Ticket = await prisma.ticket.create({
+		data: ticketDTO
+	})
+
+	const response: TicketResponseDTO = {
+		message: "Printing Ticket",
+		ticket: ticket
+	}
+
+	res.json(response)
+})
+
+app.get("/tickets/id/:id", async (req: Request, res: Response) => {
+	const ticket: Ticket | null = await prisma.ticket.findUnique({
+		where: { id: Number(req.params.id) }
+	})
+
+	res.json(ticket)
+})
+
+app.get("/tickets", async (req, res) => {
+	const { name, email } = req.query;
+
+	const where: Prisma.TicketWhereInput = {}
+
+	if (typeof name === "string" && name.trim() !== "") {
+		where.name = { contains: name, mode: "insensitive" }
+	}
+
+	if (typeof email === "string" && email.trim() !== "") {
+		where.email = { contains: email, mode: "insensitive" }
+	}
+
+	console.log("Prisma where filter:", where)
+
+	const tickets = await prisma.ticket.findMany({
+		where,
+		orderBy: { createdAt: "desc" },
+	});
+
+	res.json(tickets)
+});
 app.listen(port, () => {
 	console.log(`Server running at http://localhost:${port}`);
-});
+})
