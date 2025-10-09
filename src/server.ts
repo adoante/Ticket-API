@@ -1,5 +1,5 @@
 import express from "express"
-import type { Express, Request, Response } from "express"
+import type { Express, Request, Response, NextFunction } from "express"
 
 import dotenv from "dotenv"
 import cors from "cors"
@@ -36,26 +36,49 @@ app.use(cors({
 	credentials: true,
 }))
 
-app.use("/tickets", (req, res, next) => {
+function authenticateToken(req: Request, res: Response, next: NextFunction) {
 	const authHeader = req.headers.authorization;
 
 	if (!authHeader || !authHeader.startsWith("Bearer ")) {
-		return res.status(401).json({ error: "Unauthorized" })
+		return res.status(401).json({ error: "Unauthorized" });
 	}
 
 	const token = authHeader.split(" ")[1];
 	if (token !== process.env.API_TOKEN) {
-		return res.status(403).json({ error: "Forbidden" })
+		return res.status(403).json({ error: "Forbidden" });
 	}
 
-	next()
-})
+	next();
+}
 
 app.get("/", (req: Request, res: Response) => {
 	res.send("Ticket API.")
 })
 
-app.post("/submit", async (req: Request, res: Response) => {
+app.get("/tickets", async (req, res) => {
+	const { name, email } = req.query as TicketQueryParams
+
+	const where: Prisma.TicketWhereInput = {}
+
+	if (typeof name === "string" && name.trim() !== "") {
+		where.name = { contains: name, mode: "insensitive" }
+	}
+
+	if (typeof email === "string" && email.trim() !== "") {
+		where.email = { contains: email, mode: "insensitive" }
+	}
+
+	console.log("Prisma where filter:", where)
+
+	const tickets = await prisma.ticket.findMany({
+		where,
+		orderBy: { createdAt: "desc" },
+	});
+
+	res.json(tickets)
+})
+
+app.post("/submit", authenticateToken, async (req: Request, res: Response) => {
 	const ticketDTO: TicketCreateDTO = req.body
 
 	const ticket: Ticket = await prisma.ticket.create({
@@ -70,7 +93,7 @@ app.post("/submit", async (req: Request, res: Response) => {
 	res.json(response)
 })
 
-app.get("/tickets/id/:id", async (req: Request, res: Response) => {
+app.get("/tickets/id/:id", authenticateToken, async (req: Request, res: Response) => {
 	const ticket: Ticket | null = await prisma.ticket.findUnique({
 		where: { id: Number(req.params.id) }
 	})
@@ -78,7 +101,7 @@ app.get("/tickets/id/:id", async (req: Request, res: Response) => {
 	res.json(ticket)
 })
 
-app.get("/tickets", async (req, res) => {
+app.get("/tickets", authenticateToken, async (req, res) => {
 	const { name, email } = req.query as TicketQueryParams
 
 	const where: Prisma.TicketWhereInput = {}
