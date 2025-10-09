@@ -14,21 +14,24 @@ dotenv.config()
 const prisma = new PrismaClient()
 const app: Express = express();
 
-app.use(cors({
-	origin: "https://adolfogante.com",
-	methods: ["GET", "POST", "PUT", "DELETE"],
-}))
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
+const allowedOrigins = [
+	"https://adolfogante.com",
+	"https://www.adolfogante.com"
+]
+
 app.use(cors({
 	origin: (origin, callback) => {
-		if (!origin || origin.endsWith(".adolfogante.com") || origin === "https://adolfogante.com") {
+		if (!origin || allowedOrigins.includes(origin)) {
 			callback(null, true);
 		} else {
 			callback(new Error("Not allowed by CORS"));
 		}
 	},
+	methods: ["GET", "POST", "PUT", "DELETE"],
+	credentials: true, // if you use cookies or auth headers
 }))
 
 const port = process.env.PORT || 3000
