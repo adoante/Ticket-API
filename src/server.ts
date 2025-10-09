@@ -21,15 +21,15 @@ app.use(cors({
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
-app.use((req, res, next) => {
-	const allowedOrigin = "https://adolfogante.com"
-
-	if (req.headers.origin && req.headers.origin !== allowedOrigin) {
-		return res.status(403).json({ error: "Forbidden" })
-	}
-
-	next()
-})
+app.use(cors({
+	origin: (origin, callback) => {
+		if (!origin || origin.endsWith(".adolfogante.com") || origin === "https://adolfogante.com") {
+			callback(null, true);
+		} else {
+			callback(new Error("Not allowed by CORS"));
+		}
+	},
+}))
 
 const port = process.env.PORT || 3000
 
