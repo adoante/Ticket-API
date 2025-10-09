@@ -21,6 +21,16 @@ app.use(cors({
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
+app.use((req, res, next) => {
+	const allowedOrigin = "https://adolfogante.com"
+
+	if (req.headers.origin && req.headers.origin !== allowedOrigin) {
+		return res.status(403).json({ error: "Forbidden" })
+	}
+
+	next()
+})
+
 const port = process.env.PORT || 3000
 
 app.get("/", (req: Request, res: Response) => {
