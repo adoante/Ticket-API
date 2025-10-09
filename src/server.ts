@@ -14,7 +14,10 @@ dotenv.config()
 const prisma = new PrismaClient()
 const app: Express = express();
 
-app.use(cors())
+app.use(cors({
+	origin: "https://adolfogante.com",
+	methods: ["GET", "POST", "PUT", "DELETE"],
+}))
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
@@ -48,7 +51,7 @@ app.get("/tickets/id/:id", async (req: Request, res: Response) => {
 })
 
 app.get("/tickets", async (req, res) => {
-	const { name, email } = req.query;
+	const { name, email } = req.query as TicketQueryParams
 
 	const where: Prisma.TicketWhereInput = {}
 
