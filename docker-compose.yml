@@ -23,7 +23,7 @@ services:
       - postgres
     env_file:
       - .env
-    ports:
+    expose:
       - "${PORT}"
     command: sh -c "npx prisma migrate deploy && npm run dev"
 
