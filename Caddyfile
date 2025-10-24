@@ -1,7 +1,0 @@
-ticket.adolfogante.com {
-    reverse_proxy ticket-api:3000
-
-    log {
-        output file /data/access.log
-    }
-}

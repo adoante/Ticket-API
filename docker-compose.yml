@@ -24,26 +24,11 @@ services:
     env_file:
       - .env
     command: sh -c "npx prisma migrate deploy && npm run dev"
-    ports:
-      - "3000:3000"
-    restart: unless-stopped
-
-  # Caddy Reverse Proxy with HTTPS
-  caddy:
-    image: caddy:2
-    container_name: ticket-caddy
-    depends_on:
-      - express
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - caddy_data:/data
-      - caddy_config:/config
+    expose:
+      - "3000"
+    networks:
+      - webnet
     restart: unless-stopped
 
 volumes:
   postgres_data:
-  caddy_data:
-  caddy_config:
