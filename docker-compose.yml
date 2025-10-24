@@ -27,7 +27,8 @@ services:
     expose:
       - "3000"
     networks:
-      - webnet
+      - default
+      - webnet # For Caddy reverse proxy
     restart: unless-stopped
 
 networks:
